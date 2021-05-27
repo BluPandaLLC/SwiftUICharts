@@ -58,20 +58,19 @@ public struct StackedBarChart<ChartData>: View where ChartData: StackedBarChartD
     public var body: some View {
         if chartData.isGreaterThanTwo() {
             HStack(alignment: .bottom, spacing: 0) {
+                Spacer()
+                    .frame(width: 10)
                 ForEach(chartData.dataSets.dataSets) { dataSet in
-                    StackElementSubView(dataSet: dataSet, specifier: chartData.infoView.touchSpecifier)
-                        .scaleEffect(y: startAnimation ? CGFloat(dataSet.maxValue() / chartData.maxValue) : 0, anchor: .bottom)
-                        .scaleEffect(x: chartData.barStyle.barWidth, anchor: .center)
+                    StackElementSubView(dataSet: dataSet, specifier: chartData.infoView.touchSpecifier, chartMaxValue: chartData.maxValue)
                         .background(Color(.gray).opacity(0.000000001))
-                        .animateOnAppear(using: chartData.chartStyle.globalAnimation) {
-                            self.startAnimation = true
-                        }
-                        .animateOnDisappear(using: chartData.chartStyle.globalAnimation) {
-                            self.startAnimation = false
-                        }
                         .accessibilityLabel( Text("\(chartData.metadata.title)"))
+                    
+                    Spacer()
+                        .frame(width: 10)
                 }
             }
-        } else { CustomNoDataView(chartData: chartData) }
+        } else {
+            CustomNoDataView(chartData: chartData)
+        }
     }
 }

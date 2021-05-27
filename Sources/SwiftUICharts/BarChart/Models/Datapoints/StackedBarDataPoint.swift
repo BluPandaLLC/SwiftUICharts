@@ -28,11 +28,13 @@ public struct StackedBarDataPoint: CTMultiBarDataPoint {
     ///   - group: Group data informs the data models how the data point are linked.
     public init(
         value: Double,
+        xAxisLabel: String,
         description: String? = nil,
         date: Date? = nil,
         group: GroupingData
     ) {
         self.value = value
+        self.xAxisLabel = xAxisLabel
         self.description = description
         self.date = date
         self.group = group

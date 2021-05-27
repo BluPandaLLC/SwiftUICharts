@@ -6,6 +6,12 @@
 //
 
 import SwiftUI
+import BPApi
+import os.log
+
+struct Log {
+    static let osLog = OSLog(subsystem: "com.blupanda.pandaed", category: "swiftuicharts")
+}
 
 // MARK: - Standard
 //
@@ -169,47 +175,58 @@ internal struct StackElementSubView: View {
     
     private let dataSet: StackedBarDataSet
     private let specifier: String
+    private let chartMaxValue: Double
     
     internal init(
         dataSet: StackedBarDataSet,
-        specifier: String
+        specifier: String,
+        chartMaxValue: Double
     ) {
         self.dataSet = dataSet
         self.specifier = specifier
+        self.chartMaxValue = chartMaxValue
     }
     
     internal var body: some View {
         GeometryReader { geo in
             
             VStack(spacing: 0) {
+                if dataSet.maxValue < chartMaxValue {
+                    Spacer()
+                }
+
                 ForEach(dataSet.dataPoints.reversed()) { dataPoint in
                     if dataPoint.group.colour.colourType == .colour,
                        let colour = dataPoint.group.colour.colour
                     {
-                        ColourPartBar(colour, getHeight(height: geo.size.height,
-                                                        dataSet: dataSet,
-                                                        dataPoint: dataPoint))
-                            .accessibilityValue(dataPoint.getCellAccessibilityValue(specifier: specifier))
-                    } else if dataPoint.group.colour.colourType == .gradientColour,
-                              let colours = dataPoint.group.colour.colours,
-                              let startPoint = dataPoint.group.colour.startPoint,
-                              let endPoint = dataPoint.group.colour.endPoint
-                    {
-                        GradientColoursPartBar(colours, startPoint, endPoint, getHeight(height: geo.size.height,
-                                                                                        dataSet: dataSet,
-                                                                                        dataPoint: dataPoint))
-                            .accessibilityValue(dataPoint.getCellAccessibilityValue(specifier: specifier))
-                    } else if dataPoint.group.colour.colourType == .gradientStops,
-                              let stops = dataPoint.group.colour.stops,
-                              let startPoint = dataPoint.group.colour.startPoint,
-                              let endPoint = dataPoint.group.colour.endPoint
-                    {
-                        let safeStops = GradientStop.convertToGradientStopsArray(stops: stops)
-                        GradientStopsPartBar(safeStops, startPoint, endPoint, getHeight(height: geo.size.height,
-                                                                                        dataSet: dataSet,
-                                                                                        dataPoint: dataPoint))
+                        ColourPartBar(colour,
+                                      getHeight(height: geo.size.height,
+                                                dataSet: dataSet,
+                                                dataPoint: dataPoint,
+                                                maxValue: chartMaxValue),
+                                      dataPoint.xAxisLabel ?? "")
                             .accessibilityValue(dataPoint.getCellAccessibilityValue(specifier: specifier))
                     }
+//                    else if dataPoint.group.colour.colourType == .gradientColour,
+//                              let colours = dataPoint.group.colour.colours,
+//                              let startPoint = dataPoint.group.colour.startPoint,
+//                              let endPoint = dataPoint.group.colour.endPoint
+//                    {
+//                        GradientColoursPartBar(colours, startPoint, endPoint, getHeight(height: geo.size.height,
+//                                                                                        dataSet: dataSet,
+//                                                                                        dataPoint: dataPoint))
+//                            .accessibilityValue(dataPoint.getCellAccessibilityValue(specifier: specifier))
+//                    } else if dataPoint.group.colour.colourType == .gradientStops,
+//                              let stops = dataPoint.group.colour.stops,
+//                              let startPoint = dataPoint.group.colour.startPoint,
+//                              let endPoint = dataPoint.group.colour.endPoint
+//                    {
+//                        let safeStops = GradientStop.convertToGradientStopsArray(stops: stops)
+//                        GradientStopsPartBar(safeStops, startPoint, endPoint, getHeight(height: geo.size.height,
+//                                                                                        dataSet: dataSet,
+//                                                                                        dataPoint: dataPoint))
+//                            .accessibilityValue(dataPoint.getCellAccessibilityValue(specifier: specifier))
+//                    }
                 }
             }
         }
@@ -224,13 +241,12 @@ internal struct StackElementSubView: View {
     private func getHeight(
         height: CGFloat,
         dataSet: StackedBarDataSet,
-        dataPoint: StackedBarDataPoint
+        dataPoint: StackedBarDataPoint,
+        maxValue: Double
     ) -> CGFloat {
         let value = dataPoint.value
-        let sum = dataSet.dataPoints
-            .map(\.value)
-            .reduce(0, +)
-        return height * CGFloat(value / sum)
+        os_log(.default, log: Log.osLog, "Dataset maxValue %8.2f, value %8.2f, height %8.2f, bar height %8.2f, %@", dataSet.maxValue, value, height, height * CGFloat(value / maxValue), dataPoint.xAxisLabel!)
+        return height * CGFloat(value / maxValue)
     }
 }
 
@@ -241,22 +257,37 @@ internal struct StackElementSubView: View {
  For Stacked Bar Charts.
  */
 internal struct ColourPartBar: View {
-    
     private let colour: Color
     private let height: CGFloat
+    private let label: String
     
     internal init(
         _ colour: Color,
-        _ height: CGFloat
+        _ height: CGFloat,
+        _ label: String
     ) {
         self.colour = colour
         self.height = height
+        self.label = label
     }
     
     internal var body: some View {
-        Rectangle()
-            .fill(colour)
-            .frame(height: height)
+        ZStack {
+            if height > 0 {
+                RoundedRectangle(cornerRadius: 3.0)
+                    .fill(colour)
+                    .frame(height: height)
+
+                Text(label)
+                    .foregroundColor(.pandaHighlightAlert)
+                    .font(Font.custom("Avenir-Medium", size: 12))
+                    .padding([.leading, .trailing], 2)
+                    .background(Color.white)
+                    .cornerRadius(3)
+            } else {
+                EmptyView()
+            }
+        }
     }
 }
 
