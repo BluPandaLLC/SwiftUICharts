@@ -245,7 +245,7 @@ internal struct StackElementSubView: View {
         maxValue: Double
     ) -> CGFloat {
         let value = dataPoint.value
-        os_log(.default, log: Log.osLog, "Dataset maxValue %8.2f, value %8.2f, height %8.2f, bar height %8.2f, %@", dataSet.maxValue, value, height, height * CGFloat(value / maxValue), dataPoint.xAxisLabel!)
+//        os_log(.default, log: Log.osLog, "Dataset maxValue %8.2f, value %8.2f, height %8.2f, bar height %8.2f, %@", dataSet.maxValue, value, height, height * CGFloat(value / maxValue), dataPoint.xAxisLabel!)
         return height * CGFloat(value / maxValue)
     }
 }
